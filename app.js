@@ -6,39 +6,29 @@ const path = require('path');
 const http = require('http');
 const https = require('https');
 
-const processUrl = (originalUrl) => {
-  const urlRegExp = new RegExp(`^/([a-zA-Z0-9:.-]+.(?:opentok.com|tokbox.com)[:0-9]*)/(.*)$`);
-  const matches = originalUrl.match(urlRegExp);
-  if (!matches || matches.length < 3) {
-    return 'https://tokbox.com';
-  }
-  const returnUrl = `https://${matches[1]}/${matches[2]}`;
-  console.log(`${originalUrl} -> ${returnUrl}`)
-  return returnUrl;
-};
 
-const proxyRouter = (req) => {
-  if (!req.originalUrl && !req.url) {
-    return '';
-  }
-  return processUrl(req.originalUrl || req.url);
-};
+
+
+
 
 const otProxy = proxy({
-  target: 'https://tokbox.com', // Not really used since we are changing the target with router function
-  router: proxyRouter,
+  target: 'https://ot-test-reverse-proxy.herokuapp.com',
+  pathRewrite: {
+        [`^/json_placeholder/abc/123`]: '',
+    },
   changeOrigin: true,
-  ignorePath: true,
+
+  
   ws: true,
 });
 
 const app = express()
-const PORT = process.env.PORT || 3000;
-const USE_SSL = process.env.USE_SSL
-  || process.argv.indexOf('-use-ssl') > -1;
+const PORT = 3000;
+const USE_SSL = 0
 
-app.use('/', cors(), otProxy);
-app.use('/proxy', cors(), otProxy);
+
+app.use('/json_placeholder',  otProxy);
+
 let server;
 
 if (!USE_SSL) {
